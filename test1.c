@@ -3,8 +3,6 @@ int main() {
     float cgpa=3.34;
     char() name="Mezbahul";
 
-
-
     printf("Hello world\n");
     printf(age);
     printf(cgpa);

@@ -18,7 +18,6 @@ int yylineno = 1;
 "return"        { return RETURN; }
 "if"            { return IF; }
 "else"          { return ELSE; }
-"while"         { return WHILE; }
 "printf"        { yylval.str = strdup(yytext); return PRINTF; }
 "void"          { return VOID; }
 [0-9]+\.[0-9]+  { yylval.str = strdup(yytext); return FLOAT_NUM; }
@@ -30,6 +29,7 @@ int yylineno = 1;
 "-"             { return MINUS; }
 "*"             { return MUL; }
 "/"             { return DIV; }
+"%"             { return MOD; }
 "="             { return ASSIGN; }
 "("             { return LPAREN; }
 ")"             { return RPAREN; }

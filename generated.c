@@ -1,7 +1,13 @@
 #include <stdio.h>
 int main() {
-    char *name = "Alice";
-    printf("Name: %s", name);
+    int a = 10;
+    int b = 20;
+    if ((a > b)) {
+    printf("a is greater");
+    }
+    else {
+    printf("b is greater");
+    }
     return 0;
     return 0;
 }

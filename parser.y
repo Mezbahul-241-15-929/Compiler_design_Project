@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 void yyerror(const char *s);
 int yylex();
@@ -14,6 +15,51 @@ extern FILE *yyin;
 extern int yylineno;
 
 FILE *output_file;
+
+// Stack-based statement buffering for control flow
+#define MAX_BUFFER_DEPTH 10
+typedef struct {
+    char buffer[50000];
+    int pos;
+} StatementBuffer;
+
+StatementBuffer buffer_stack[MAX_BUFFER_DEPTH];
+int buffer_depth = 0;  // 0 = no buffering, 1+ = buffering level
+char temp_else_body[50000];  // Temporary storage for else body
+
+void push_buffer() {
+    if (buffer_depth < MAX_BUFFER_DEPTH - 1) {
+        buffer_stack[buffer_depth].pos = 0;
+        memset(buffer_stack[buffer_depth].buffer, 0, 50000);
+        buffer_depth++;
+    }
+}
+
+char* pop_buffer() {
+    if (buffer_depth > 0) {
+        buffer_depth--;
+        return buffer_stack[buffer_depth].buffer;
+    }
+    return "";
+}
+
+void buffer_statement(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    if (buffer_depth > 0) {
+        buffer_stack[buffer_depth - 1].pos += vsprintf(buffer_stack[buffer_depth - 1].buffer + buffer_stack[buffer_depth - 1].pos, fmt, args);
+    } else {
+        vfprintf(output_file, fmt, args);
+    }
+    va_end(args);
+}
+
+char* get_current_buffer() {
+    if (buffer_depth > 0) {
+        return buffer_stack[buffer_depth - 1].buffer;
+    }
+    return "";
+}
 
 // Track variable types
 typedef struct {
@@ -55,19 +101,19 @@ int depth = 0;
     int num;
 }
 
-%token INT FLOAT CHAR RETURN IF ELSE WHILE PRINTF VOID
+%token INT FLOAT CHAR RETURN IF ELSE PRINTF VOID
 %token <str> NUMBER FLOAT_NUM ID STRING CHAR_LIT
-%token PLUS MINUS MUL DIV ASSIGN SEMICOLON COMMA QUOTE
+%token PLUS MINUS MUL DIV MOD ASSIGN SEMICOLON COMMA QUOTE
 %token LPAREN RPAREN LBRACE RBRACE
 %token LT GT LE GE EQ NE NOT AND OR INC DEC
 
-%type <str> expr
+%type <str> expr printf_args block statement
 
 %left OR
 %left AND
 %left EQ NE LT GT LE GE
 %left PLUS MINUS
-%left MUL DIV
+%left MUL DIV MOD
 %right NOT
 
 %%
@@ -85,7 +131,13 @@ function:
     ;
 
 block:
-    statements
+    {
+        push_buffer();
+    } statements {
+        char *buffered = pop_buffer();
+        fprintf(output_file, "%s", buffered);
+        $$ = "";
+    }
     ;
 
 statements:
@@ -95,93 +147,100 @@ statements:
 
 statement:
     INT ID SEMICOLON {
-        fprintf(output_file, "    int %s = 0;\n", $2);
+        buffer_statement("    int %s = 0;\n", $2);
         add_var_type($2, "int");
     }
     | INT ID ASSIGN expr SEMICOLON {
-        fprintf(output_file, "    int %s = %s;\n", $2, $4);
+        buffer_statement("    int %s = %s;\n", $2, $4);
         add_var_type($2, "int");
     }
     | FLOAT ID SEMICOLON {
-        fprintf(output_file, "    float %s = 0.0;\n", $2);
+        buffer_statement("    float %s = 0.0;\n", $2);
         add_var_type($2, "float");
     }
     | FLOAT ID ASSIGN expr SEMICOLON {
-        fprintf(output_file, "    float %s = %s;\n", $2, $4);
+        buffer_statement("    float %s = %s;\n", $2, $4);
         add_var_type($2, "float");
     }
     | CHAR ID SEMICOLON {
-        fprintf(output_file, "    char %s = '\\0';\n", $2);
+        buffer_statement("    char %s = '\\0';\n", $2);
         add_var_type($2, "char");
     }
     | CHAR LPAREN RPAREN ID SEMICOLON {
-        fprintf(output_file, "    char *%s = \"\";\n", $4);
+        buffer_statement("    char *%s = \"\";\n", $4);
         add_var_type($4, "string");
     }
     | CHAR LPAREN RPAREN ID ASSIGN STRING SEMICOLON {
-        fprintf(output_file, "    char *%s = %s;\n", $4, $6);
+        buffer_statement("    char *%s = %s;\n", $4, $6);
         add_var_type($4, "string");
     }
     | ID ASSIGN expr SEMICOLON {
-        fprintf(output_file, "    %s = %s;\n", $1, $3);
+        buffer_statement("    %s = %s;\n", $1, $3);
     }
     | ID INC SEMICOLON {
-        fprintf(output_file, "    %s++;\n", $1);
+        buffer_statement("    %s++;\n", $1);
     }
     | ID DEC SEMICOLON {
-        fprintf(output_file, "    %s--;\n", $1);
+        buffer_statement("    %s--;\n", $1);
     }
     | PRINTF LPAREN expr RPAREN SEMICOLON {
-        char *expr_val = $3;
-        if (expr_val[0] == '"') {
-            fprintf(output_file, "    printf(\"%%s\\n\", %s);\n", expr_val);
-        } else if (strchr(expr_val, '.') != NULL) {
-            fprintf(output_file, "    printf(\"%%f\\n\", %s);\n", expr_val);
+        char *val = $3;
+        char *type = get_var_type(val);
+        if (val[0] == '"') {
+            buffer_statement("    printf(%s);\n", val);
+        } else if (strchr(val, '.') != NULL) {
+            buffer_statement("    printf(\"%%f\\n\", %s);\n", val);
         } else {
-            char *type = get_var_type(expr_val);
             if (strcmp(type, "float") == 0) {
-                fprintf(output_file, "    printf(\"%%f\\n\", %s);\n", expr_val);
+                buffer_statement("    printf(\"%%f\\n\", %s);\n", val);
             } else if (strcmp(type, "string") == 0) {
-                fprintf(output_file, "    printf(\"%%s\\n\", %s);\n", expr_val);
+                buffer_statement("    printf(\"%%s\\n\", %s);\n", val);
             } else {
-                fprintf(output_file, "    printf(\"%%d\\n\", %s);\n", expr_val);
+                buffer_statement("    printf(\"%%d\\n\", %s);\n", val);
             }
         }
     }
-    | PRINTF LPAREN STRING RPAREN SEMICOLON {
-        fprintf(output_file, "    printf(%s);\n", $3);
-    }
-    | PRINTF LPAREN STRING COMMA expr RPAREN SEMICOLON {
-        char *fmt = $3;
+    | PRINTF LPAREN expr COMMA expr RPAREN SEMICOLON {
+        char *label = $3;
         char *val = $5;
         char *type = get_var_type(val);
-        
-        // Remove quotes from format string
-        char fmt_clean[200];
-        strncpy(fmt_clean, fmt + 1, strlen(fmt) - 2);
-        fmt_clean[strlen(fmt) - 2] = '\0';
-        
-        // Check if format string has format specifier
-        if (strchr(fmt_clean, '%') == NULL) {
-            // No format specifier, add one based on type
-            char new_fmt[200];
-            if (strcmp(type, "float") == 0) {
-                sprintf(new_fmt, "\"%s %%f\"", fmt_clean);
-            } else if (strcmp(type, "string") == 0) {
-                sprintf(new_fmt, "\"%s %%s\"", fmt_clean);
-            } else {
-                sprintf(new_fmt, "\"%s %%d\"", fmt_clean);
-            }
-            fprintf(output_file, "    printf(%s, %s);\n", new_fmt, val);
+        if (val[0] == '"') {
+            buffer_statement("    printf(\"%%s\", %s); printf(%s);\n", label, val);
+        } else if (strchr(val, '.') != NULL) {
+            buffer_statement("    printf(\"%%s%%f\", %s, %s);\n", label, val);
         } else {
-            fprintf(output_file, "    printf(%s, %s);\n", fmt, val);
+            if (strcmp(type, "float") == 0) {
+                buffer_statement("    printf(\"%%s%%f\", %s, %s);\n", label, val);
+            } else if (strcmp(type, "string") == 0) {
+                buffer_statement("    printf(\"%%s%%s\", %s, %s);\n", label, val);
+            } else {
+                buffer_statement("    printf(\"%%s%%d\", %s, %s);\n", label, val);
+            }
         }
     }
+    | PRINTF LPAREN printf_args RPAREN SEMICOLON {
+        buffer_statement("%s", $3);
+    }
     | RETURN expr SEMICOLON {
-        fprintf(output_file, "    return %s;\n", $2);
+        buffer_statement("    return %s;\n", $2);
     }
     | RETURN SEMICOLON {
-        fprintf(output_file, "    return 0;\n");
+        buffer_statement("    return 0;\n");
+    }
+    | IF LPAREN expr RPAREN LBRACE {push_buffer();} statements RBRACE else_part {
+        char *if_body = pop_buffer();
+        buffer_statement("    if (%s) {\n%s    }\n", $3, if_body);
+        if (strlen(temp_else_body) > 0) {
+            buffer_statement("    else {\n%s    }\n", temp_else_body);
+            temp_else_body[0] = '\0';
+        }
+    }
+    ;
+
+else_part:
+    /* empty */
+    | ELSE LBRACE {push_buffer();} statements RBRACE {
+        strcpy(temp_else_body, pop_buffer());
     }
     ;
 
@@ -204,6 +263,11 @@ expr:
     | expr DIV expr {
         char *result = malloc(100);
         sprintf(result, "(%s / %s)", $1, $3);
+        $$ = result;
+    }
+    | expr MOD expr {
+        char *result = malloc(100);
+        sprintf(result, "(%s %% %s)", $1, $3);
         $$ = result;
     }
     | expr LT expr {
@@ -277,6 +341,90 @@ expr:
     | ID DEC {
         char *result = malloc(100);
         sprintf(result, "(%s--)", $1);
+        $$ = result;
+    }
+    ;
+
+printf_args:
+    expr COMMA expr {
+        char *result = malloc(2000);
+        char *fmt = malloc(500);
+        char *args = malloc(500);
+        
+        fmt[0] = '\0';
+        args[0] = '\0';
+        
+        // First argument
+        char *val1 = $1;
+        char *type1 = get_var_type(val1);
+        
+        if (val1[0] == '"') {
+            strcat(fmt, "%s");
+            strcat(args, val1);
+        } else if (strchr(val1, '.') != NULL || strcmp(type1, "float") == 0) {
+            strcat(fmt, "%f");
+            strcat(args, val1);
+        } else if (strcmp(type1, "string") == 0) {
+            strcat(fmt, "%s");
+            strcat(args, val1);
+        } else {
+            strcat(fmt, "%d");
+            strcat(args, val1);
+        }
+        
+        // Second argument
+        char *val2 = $3;
+        char *type2 = get_var_type(val2);
+        
+        if (val2[0] == '"') {
+            strcat(fmt, "%s");
+            strcat(args, ",");
+            strcat(args, val2);
+        } else if (strchr(val2, '.') != NULL || strcmp(type2, "float") == 0) {
+            strcat(fmt, "%f");
+            strcat(args, ",");
+            strcat(args, val2);
+        } else if (strcmp(type2, "string") == 0) {
+            strcat(fmt, "%s");
+            strcat(args, ",");
+            strcat(args, val2);
+        } else {
+            strcat(fmt, "%d");
+            strcat(args, ",");
+            strcat(args, val2);
+        }
+        
+        sprintf(result, "    printf(\"%s\", %s);\n", fmt, args);
+        free(fmt);
+        free(args);
+        $$ = result;
+    }
+    | printf_args COMMA expr {
+        char *result = malloc(2000);
+        char *prev = $1;
+        char *val = $3;
+        char *type = get_var_type(val);
+        
+        // Extract format and args from previous
+        char fmt[500];
+        char args[500];
+        sscanf(prev, "    printf(\"%[^\"]\", %[^)]", fmt, args);
+        
+        if (val[0] == '"') {
+            strcat(fmt, "%s");
+        } else if (strchr(val, '.') != NULL || strcmp(type, "float") == 0) {
+            strcat(fmt, "%f");
+        } else if (strcmp(type, "string") == 0) {
+            strcat(fmt, "%s");
+        } else {
+            strcat(fmt, "%d");
+        }
+        
+        strcat(args, ",");
+        strcat(args, val);
+        
+        sprintf(result, "    printf(\"%s\", %s);\n", fmt, args);
+        free(prev);
         $$ = result;
     }
     ;
