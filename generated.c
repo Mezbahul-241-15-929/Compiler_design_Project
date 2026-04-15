@@ -1,16 +1,14 @@
 #include <stdio.h>
 int main() {
-    char letter = 'A';
-    char *fullname = "Mezbahul Islam";
     int age = 23;
-    float cgpa = 3.8;
-    printf("%s%d", "Letter: ", letter);
-    printf("\n");
-    printf("%s%s", "Name: ", fullname);
-    printf("\n");
-    printf("%s%d", "Age: ", age);
-    printf("\n");
-    printf("%s%f", "CGPA: ", cgpa);
-    return 0;
+    float cgpa = 3.34;
+    char c = 'a';
+    char *name = "Mezbahul Islam";
+    printf("Hello world\n");
+    printf("%c\n", c);
+    printf("%d\n", age);
+    printf("%f\n", cgpa);
+    printf("%s\n", name);
+    printf("%s%s%s%d%s%f", "My name is ",name,". I am ",age," years old.My Average CGPA: ",cgpa);
     return 0;
 }

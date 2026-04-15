@@ -420,6 +420,9 @@ printf_args:
         } else if (strcmp(type1, "string") == 0) {
             strcat(fmt, "%s");
             strcat(args, val1);
+        } else if (strcmp(type1, "char") == 0) {
+            strcat(fmt, "%c");
+            strcat(args, val1);
         } else {
             strcat(fmt, "%d");
             strcat(args, val1);
@@ -439,6 +442,10 @@ printf_args:
             strcat(args, val2);
         } else if (strcmp(type2, "string") == 0) {
             strcat(fmt, "%s");
+            strcat(args, ",");
+            strcat(args, val2);
+        } else if (strcmp(type2, "char") == 0) {
+            strcat(fmt, "%c");
             strcat(args, ",");
             strcat(args, val2);
         } else {
@@ -469,6 +476,8 @@ printf_args:
             strcat(fmt, "%f");
         } else if (strcmp(type, "string") == 0) {
             strcat(fmt, "%s");
+        } else if (strcmp(type, "char") == 0) {
+            strcat(fmt, "%c");
         } else {
             strcat(fmt, "%d");
         }

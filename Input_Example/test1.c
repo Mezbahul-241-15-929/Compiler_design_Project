@@ -1,9 +1,12 @@
 int main() {
     int age=23;
     float cgpa=3.34;
-    char() name="Mezbahul";
+    char c='a';
+    string name="Mezbahul Islam";
+
 
     printf("Hello world\n");
+    printf(c);
     printf(age);
     printf(cgpa);
     printf(name);

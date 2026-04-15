@@ -574,10 +574,10 @@ static const yytype_uint16 yyrline[] =
 {
        0,   122,   122,   126,   126,   134,   134,   144,   145,   149,
      153,   157,   161,   165,   169,   173,   177,   181,   184,   187,
-     190,   207,   257,   260,   263,   266,   266,   274,   274,   280,
-     282,   282,   286,   286,   295,   300,   305,   310,   315,   320,
-     325,   330,   335,   340,   345,   350,   355,   360,   365,   368,
-     371,   374,   377,   380,   383,   388,   396,   449
+     190,   209,   263,   266,   269,   272,   272,   280,   280,   286,
+     288,   288,   292,   292,   301,   306,   311,   316,   321,   326,
+     331,   336,   341,   346,   351,   356,   361,   366,   371,   374,
+     377,   380,   383,   386,   389,   394,   402,   462
 };
 #endif
 
@@ -1785,6 +1785,8 @@ yyreduce:
                 buffer_statement("    printf(\"%%f\\n\", %s);\n", val);
             } else if (strcmp(type, "string") == 0) {
                 buffer_statement("    printf(\"%%s\\n\", %s);\n", val);
+            } else if (strcmp(type, "char") == 0) {
+                buffer_statement("    printf(\"%%c\\n\", %s);\n", val);
             } else {
                 buffer_statement("    printf(\"%%d\\n\", %s);\n", val);
             }
@@ -1795,7 +1797,7 @@ yyreduce:
   case 21:
 
 /* Line 1455 of yacc.c  */
-#line 207 "parser.y"
+#line 209 "parser.y"
     {
         char *first = (yyvsp[(3) - (7)].str);
         char *second = (yyvsp[(5) - (7)].str);
@@ -1815,6 +1817,8 @@ yyreduce:
                 buffer_statement("    printf(\"%%s%%f\", %s, %s);\n", first, second);
             } else if (strcmp(type, "string") == 0) {
                 buffer_statement("    printf(\"%%s%%s\", %s, %s);\n", first, second);
+            } else if (strcmp(type, "char") == 0) {
+                buffer_statement("    printf(\"%%s%%c\", %s, %s);\n", first, second);
             } else {
                 buffer_statement("    printf(\"%%s%%d\", %s, %s);\n", first, second);
             }
@@ -1827,6 +1831,8 @@ yyreduce:
                 buffer_statement("    printf(\"%%f%%s\", %s, %s);\n", first, second);
             } else if (strcmp(type, "string") == 0) {
                 buffer_statement("    printf(\"%%s%%s\", %s, %s);\n", first, second);
+            } else if (strcmp(type, "char") == 0) {
+                buffer_statement("    printf(\"%%c%%s\", %s, %s);\n", first, second);
             } else {
                 buffer_statement("    printf(\"%%d%%s\", %s, %s);\n", first, second);
             }
@@ -1851,7 +1857,7 @@ yyreduce:
   case 22:
 
 /* Line 1455 of yacc.c  */
-#line 257 "parser.y"
+#line 263 "parser.y"
     {
         buffer_statement("%s", (yyvsp[(3) - (5)].str));
     ;}
@@ -1860,7 +1866,7 @@ yyreduce:
   case 23:
 
 /* Line 1455 of yacc.c  */
-#line 260 "parser.y"
+#line 266 "parser.y"
     {
         buffer_statement("    return %s;\n", (yyvsp[(2) - (3)].str));
     ;}
@@ -1869,7 +1875,7 @@ yyreduce:
   case 24:
 
 /* Line 1455 of yacc.c  */
-#line 263 "parser.y"
+#line 269 "parser.y"
     {
         buffer_statement("    return 0;\n");
     ;}
@@ -1878,14 +1884,14 @@ yyreduce:
   case 25:
 
 /* Line 1455 of yacc.c  */
-#line 266 "parser.y"
+#line 272 "parser.y"
     {push_buffer();;}
     break;
 
   case 26:
 
 /* Line 1455 of yacc.c  */
-#line 266 "parser.y"
+#line 272 "parser.y"
     {
         char *if_body = pop_buffer();
         buffer_statement("    if (%s) {\n%s    }\n", (yyvsp[(3) - (9)].str), if_body);
@@ -1899,14 +1905,14 @@ yyreduce:
   case 27:
 
 /* Line 1455 of yacc.c  */
-#line 274 "parser.y"
+#line 280 "parser.y"
     {push_buffer();;}
     break;
 
   case 28:
 
 /* Line 1455 of yacc.c  */
-#line 274 "parser.y"
+#line 280 "parser.y"
     {
         char *loop_body = pop_buffer();
         buffer_statement("    for (%s = %s; %s; %s++) {\n%s    }\n", (yyvsp[(3) - (15)].str), (yyvsp[(5) - (15)].str), (yyvsp[(7) - (15)].str), (yyvsp[(9) - (15)].str), loop_body);
@@ -1916,14 +1922,14 @@ yyreduce:
   case 30:
 
 /* Line 1455 of yacc.c  */
-#line 282 "parser.y"
+#line 288 "parser.y"
     {push_buffer();;}
     break;
 
   case 31:
 
 /* Line 1455 of yacc.c  */
-#line 282 "parser.y"
+#line 288 "parser.y"
     {
         char *else_body = pop_buffer();
         sprintf(temp_else_body, "    else {\n%s    }\n", else_body);
@@ -1933,14 +1939,14 @@ yyreduce:
   case 32:
 
 /* Line 1455 of yacc.c  */
-#line 286 "parser.y"
+#line 292 "parser.y"
     {push_buffer();;}
     break;
 
   case 33:
 
 /* Line 1455 of yacc.c  */
-#line 286 "parser.y"
+#line 292 "parser.y"
     {
         char *elseif_body = pop_buffer();
         char temp[100000];
@@ -1952,7 +1958,7 @@ yyreduce:
   case 34:
 
 /* Line 1455 of yacc.c  */
-#line 295 "parser.y"
+#line 301 "parser.y"
     {
         char *result = malloc(100);
         sprintf(result, "(%s + %s)", (yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].str));
@@ -1963,7 +1969,7 @@ yyreduce:
   case 35:
 
 /* Line 1455 of yacc.c  */
-#line 300 "parser.y"
+#line 306 "parser.y"
     {
         char *result = malloc(100);
         sprintf(result, "(%s - %s)", (yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].str));
@@ -1974,7 +1980,7 @@ yyreduce:
   case 36:
 
 /* Line 1455 of yacc.c  */
-#line 305 "parser.y"
+#line 311 "parser.y"
     {
         char *result = malloc(100);
         sprintf(result, "(%s * %s)", (yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].str));
@@ -1985,7 +1991,7 @@ yyreduce:
   case 37:
 
 /* Line 1455 of yacc.c  */
-#line 310 "parser.y"
+#line 316 "parser.y"
     {
         char *result = malloc(100);
         sprintf(result, "(%s / %s)", (yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].str));
@@ -1996,7 +2002,7 @@ yyreduce:
   case 38:
 
 /* Line 1455 of yacc.c  */
-#line 315 "parser.y"
+#line 321 "parser.y"
     {
         char *result = malloc(100);
         sprintf(result, "(%s %% %s)", (yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].str));
@@ -2007,7 +2013,7 @@ yyreduce:
   case 39:
 
 /* Line 1455 of yacc.c  */
-#line 320 "parser.y"
+#line 326 "parser.y"
     {
         char *result = malloc(100);
         sprintf(result, "(%s < %s)", (yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].str));
@@ -2018,7 +2024,7 @@ yyreduce:
   case 40:
 
 /* Line 1455 of yacc.c  */
-#line 325 "parser.y"
+#line 331 "parser.y"
     {
         char *result = malloc(100);
         sprintf(result, "(%s > %s)", (yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].str));
@@ -2029,7 +2035,7 @@ yyreduce:
   case 41:
 
 /* Line 1455 of yacc.c  */
-#line 330 "parser.y"
+#line 336 "parser.y"
     {
         char *result = malloc(100);
         sprintf(result, "(%s <= %s)", (yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].str));
@@ -2040,7 +2046,7 @@ yyreduce:
   case 42:
 
 /* Line 1455 of yacc.c  */
-#line 335 "parser.y"
+#line 341 "parser.y"
     {
         char *result = malloc(100);
         sprintf(result, "(%s >= %s)", (yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].str));
@@ -2051,7 +2057,7 @@ yyreduce:
   case 43:
 
 /* Line 1455 of yacc.c  */
-#line 340 "parser.y"
+#line 346 "parser.y"
     {
         char *result = malloc(100);
         sprintf(result, "(%s == %s)", (yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].str));
@@ -2062,7 +2068,7 @@ yyreduce:
   case 44:
 
 /* Line 1455 of yacc.c  */
-#line 345 "parser.y"
+#line 351 "parser.y"
     {
         char *result = malloc(100);
         sprintf(result, "(%s != %s)", (yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].str));
@@ -2073,7 +2079,7 @@ yyreduce:
   case 45:
 
 /* Line 1455 of yacc.c  */
-#line 350 "parser.y"
+#line 356 "parser.y"
     {
         char *result = malloc(100);
         sprintf(result, "(%s && %s)", (yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].str));
@@ -2084,7 +2090,7 @@ yyreduce:
   case 46:
 
 /* Line 1455 of yacc.c  */
-#line 355 "parser.y"
+#line 361 "parser.y"
     {
         char *result = malloc(100);
         sprintf(result, "(%s || %s)", (yyvsp[(1) - (3)].str), (yyvsp[(3) - (3)].str));
@@ -2095,7 +2101,7 @@ yyreduce:
   case 47:
 
 /* Line 1455 of yacc.c  */
-#line 360 "parser.y"
+#line 366 "parser.y"
     {
         char *result = malloc(100);
         sprintf(result, "(!%s)", (yyvsp[(2) - (2)].str));
@@ -2106,7 +2112,7 @@ yyreduce:
   case 48:
 
 /* Line 1455 of yacc.c  */
-#line 365 "parser.y"
+#line 371 "parser.y"
     {
         (yyval.str) = (yyvsp[(2) - (3)].str);
     ;}
@@ -2115,7 +2121,7 @@ yyreduce:
   case 49:
 
 /* Line 1455 of yacc.c  */
-#line 368 "parser.y"
+#line 374 "parser.y"
     {
         (yyval.str) = (yyvsp[(1) - (1)].str);
     ;}
@@ -2124,7 +2130,7 @@ yyreduce:
   case 50:
 
 /* Line 1455 of yacc.c  */
-#line 371 "parser.y"
+#line 377 "parser.y"
     {
         (yyval.str) = (yyvsp[(1) - (1)].str);
     ;}
@@ -2133,7 +2139,7 @@ yyreduce:
   case 51:
 
 /* Line 1455 of yacc.c  */
-#line 374 "parser.y"
+#line 380 "parser.y"
     {
         (yyval.str) = (yyvsp[(1) - (1)].str);
     ;}
@@ -2142,7 +2148,7 @@ yyreduce:
   case 52:
 
 /* Line 1455 of yacc.c  */
-#line 377 "parser.y"
+#line 383 "parser.y"
     {
         (yyval.str) = (yyvsp[(1) - (1)].str);
     ;}
@@ -2151,7 +2157,7 @@ yyreduce:
   case 53:
 
 /* Line 1455 of yacc.c  */
-#line 380 "parser.y"
+#line 386 "parser.y"
     {
         (yyval.str) = (yyvsp[(1) - (1)].str);
     ;}
@@ -2160,7 +2166,7 @@ yyreduce:
   case 54:
 
 /* Line 1455 of yacc.c  */
-#line 383 "parser.y"
+#line 389 "parser.y"
     {
         char *result = malloc(100);
         sprintf(result, "(%s++)", (yyvsp[(1) - (2)].str));
@@ -2171,7 +2177,7 @@ yyreduce:
   case 55:
 
 /* Line 1455 of yacc.c  */
-#line 388 "parser.y"
+#line 394 "parser.y"
     {
         char *result = malloc(100);
         sprintf(result, "(%s--)", (yyvsp[(1) - (2)].str));
@@ -2182,7 +2188,7 @@ yyreduce:
   case 56:
 
 /* Line 1455 of yacc.c  */
-#line 396 "parser.y"
+#line 402 "parser.y"
     {
         char *result = malloc(2000);
         char *fmt = malloc(500);
@@ -2203,6 +2209,9 @@ yyreduce:
             strcat(args, val1);
         } else if (strcmp(type1, "string") == 0) {
             strcat(fmt, "%s");
+            strcat(args, val1);
+        } else if (strcmp(type1, "char") == 0) {
+            strcat(fmt, "%c");
             strcat(args, val1);
         } else {
             strcat(fmt, "%d");
@@ -2225,6 +2234,10 @@ yyreduce:
             strcat(fmt, "%s");
             strcat(args, ",");
             strcat(args, val2);
+        } else if (strcmp(type2, "char") == 0) {
+            strcat(fmt, "%c");
+            strcat(args, ",");
+            strcat(args, val2);
         } else {
             strcat(fmt, "%d");
             strcat(args, ",");
@@ -2241,7 +2254,7 @@ yyreduce:
   case 57:
 
 /* Line 1455 of yacc.c  */
-#line 449 "parser.y"
+#line 462 "parser.y"
     {
         char *result = malloc(2000);
         char *prev = (yyvsp[(1) - (3)].str);
@@ -2259,6 +2272,8 @@ yyreduce:
             strcat(fmt, "%f");
         } else if (strcmp(type, "string") == 0) {
             strcat(fmt, "%s");
+        } else if (strcmp(type, "char") == 0) {
+            strcat(fmt, "%c");
         } else {
             strcat(fmt, "%d");
         }
@@ -2275,7 +2290,7 @@ yyreduce:
 
 
 /* Line 1455 of yacc.c  */
-#line 2279 "parser.tab.c"
+#line 2294 "parser.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2487,7 +2502,7 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 479 "parser.y"
+#line 494 "parser.y"
 
 
 void yyerror(const char *s) {

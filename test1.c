@@ -6,6 +6,7 @@ int main() {
 
 
     printf("Hello world\n");
+    printf(c);
     printf(age);
     printf(cgpa);
     printf(name);
