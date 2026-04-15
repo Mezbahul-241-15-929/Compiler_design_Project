@@ -48,36 +48,37 @@
      ELSE = 264,
      FOR = 265,
      PRINTF = 266,
-     VOID = 267,
-     NUMBER = 268,
-     FLOAT_NUM = 269,
-     ID = 270,
-     STRING_LIT = 271,
-     CHAR_LIT = 272,
-     PLUS = 273,
-     MINUS = 274,
-     MUL = 275,
-     DIV = 276,
-     MOD = 277,
-     ASSIGN = 278,
-     SEMICOLON = 279,
-     COMMA = 280,
-     QUOTE = 281,
-     LPAREN = 282,
-     RPAREN = 283,
-     LBRACE = 284,
-     RBRACE = 285,
-     LT = 286,
-     GT = 287,
-     LE = 288,
-     GE = 289,
-     EQ = 290,
-     NE = 291,
-     NOT = 292,
-     AND = 293,
-     OR = 294,
-     INC = 295,
-     DEC = 296
+     INPUT = 267,
+     VOID = 268,
+     NUMBER = 269,
+     FLOAT_NUM = 270,
+     ID = 271,
+     STRING_LIT = 272,
+     CHAR_LIT = 273,
+     PLUS = 274,
+     MINUS = 275,
+     MUL = 276,
+     DIV = 277,
+     MOD = 278,
+     ASSIGN = 279,
+     SEMICOLON = 280,
+     COMMA = 281,
+     QUOTE = 282,
+     LPAREN = 283,
+     RPAREN = 284,
+     LBRACE = 285,
+     RBRACE = 286,
+     LT = 287,
+     GT = 288,
+     LE = 289,
+     GE = 290,
+     EQ = 291,
+     NE = 292,
+     NOT = 293,
+     AND = 294,
+     OR = 295,
+     INC = 296,
+     DEC = 297
    };
 #endif
 
@@ -88,7 +89,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 99 "parser.y"
+#line 132 "parser.y"
 
     char *str;
     int num;
@@ -96,7 +97,7 @@ typedef union YYSTYPE
 
 
 /* Line 1676 of yacc.c  */
-#line 100 "parser.tab.h"
+#line 101 "parser.tab.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

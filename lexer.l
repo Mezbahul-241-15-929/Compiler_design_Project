@@ -21,11 +21,12 @@ int yylineno = 1;
 "else"          { return ELSE; }
 "for"           { return FOR; }
 "printf"        { yylval.str = strdup(yytext); return PRINTF; }
+"input"         { yylval.str = strdup(yytext); return INPUT; }
 "void"          { return VOID; }
 [0-9]+\.[0-9]+  { yylval.str = strdup(yytext); return FLOAT_NUM; }
 [0-9]+          { yylval.str = strdup(yytext); return NUMBER; }
-\"[^\"]*\"      { yylval.str = strdup(yytext); return STRING_LIT; }
-\'[^\']*\'      { yylval.str = strdup(yytext); return CHAR_LIT; }
+\"([^\"\\\n]|\\.)*\"  { yylval.str = strdup(yytext); return STRING_LIT; }
+\'([^\'\\\n]|\\.)*\'  { yylval.str = strdup(yytext); return CHAR_LIT; }
 [a-zA-Z_][a-zA-Z0-9_]* { yylval.str = strdup(yytext); return ID; }
 "+"             { return PLUS; }
 "-"             { return MINUS; }

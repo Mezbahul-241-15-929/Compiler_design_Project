@@ -1,14 +1,21 @@
 #include <stdio.h>
+#include <string.h>
 int main() {
-    int age = 23;
-    float cgpa = 3.34;
-    char c = 'a';
-    char *name = "Mezbahul Islam";
-    printf("Hello world\n");
-    printf("%c\n", c);
-    printf("%d\n", age);
-    printf("%f\n", cgpa);
-    printf("%s\n", name);
-    printf("%s%s%s%d%s%f", "My name is ",name,". I am ",age," years old.My Average CGPA: ",cgpa);
+    int age = 0;
+    float height = 0.0;
+    char name[100];
+    printf("Enter your age: ");
+    scanf("%d", &age);
+    while (getchar() != '\n');
+    printf("Enter your height: ");
+    scanf("%f", &height);
+    while (getchar() != '\n');
+    printf("Enter your name: ");
+    scanf("%99[^\n]", name);
+    while (getchar() != '\n');
+    printf("%s%d%s", "Age: ",age,"\n");
+    printf("%s%f%s", "Height: ",height,"\n");
+    printf("%s%s%s", "Name: ",name,"\n");
+    return 0;
     return 0;
 }

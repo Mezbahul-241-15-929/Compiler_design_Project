@@ -91,6 +91,39 @@ char* get_var_type(const char *name) {
     return "int";
 }
 
+// Process escape sequences in strings
+char* process_escapes(const char *str) {
+    static char result[1000];
+    int j = 0;
+    int i = 0;
+    
+    // Skip opening quote
+    if (str[0] == '"') i = 1;
+    
+    while (str[i] && str[i] != '"' && j < 999) {
+        if (str[i] == '\\' && str[i+1]) {
+            i++;
+            switch (str[i]) {
+                case 'n': result[j++] = '\n'; break;
+                case 't': result[j++] = '\t'; break;
+                case 'r': result[j++] = '\r'; break;
+                case '\\': result[j++] = '\\'; break;
+                case '"': result[j++] = '"'; break;
+                default: result[j++] = str[i]; break;
+            }
+        } else {
+            result[j++] = str[i];
+        }
+        i++;
+    }
+    result[j] = '\0';
+    
+    // Reconstruct with quotes
+    char final[1000];
+    sprintf(final, "\"%s\"", result);
+    return strdup(final);
+}
+
 int in_function = 0;
 int depth = 0;
 
@@ -101,7 +134,7 @@ int depth = 0;
     int num;
 }
 
-%token INT FLOAT CHAR STRING RETURN IF ELSE FOR PRINTF VOID
+%token INT FLOAT CHAR STRING RETURN IF ELSE FOR PRINTF INPUT VOID
 %token <str> NUMBER FLOAT_NUM ID STRING_LIT CHAR_LIT
 %token PLUS MINUS MUL DIV MOD ASSIGN SEMICOLON COMMA QUOTE
 %token LPAREN RPAREN LBRACE RBRACE
@@ -124,7 +157,7 @@ program:
 
 function:
     INT ID LPAREN RPAREN LBRACE {
-        fprintf(output_file, "#include <stdio.h>\nint main() {\n");
+        fprintf(output_file, "#include <stdio.h>\n#include <string.h>\nint main() {\n");
     } block RBRACE {
         fprintf(output_file, "    return 0;\n}\n");
     }
@@ -171,11 +204,12 @@ statement:
         add_var_type($2, "char");
     }
     | STRING ID SEMICOLON {
-        buffer_statement("    char *%s = \"\";\n", $2);
+        buffer_statement("    char %s[100];\n", $2);
         add_var_type($2, "string");
     }
     | STRING ID ASSIGN STRING_LIT SEMICOLON {
-        buffer_statement("    char *%s = %s;\n", $2, $4);
+        buffer_statement("    char %s[100];\n", $2);
+        buffer_statement("    strcpy(%s, %s);\n", $2, $4);
         add_var_type($2, "string");
     }
     | ID ASSIGN expr SEMICOLON {
@@ -262,6 +296,23 @@ statement:
     }
     | PRINTF LPAREN printf_args RPAREN SEMICOLON {
         buffer_statement("%s", $3);
+    }
+    | INPUT LPAREN ID RPAREN SEMICOLON {
+        char *var_name = $3;
+        char *type = get_var_type(var_name);
+        if (strcmp(type, "float") == 0) {
+            buffer_statement("    scanf(\"%%f\", &%s);\n", var_name);
+            buffer_statement("    while (getchar() != '\\n');\n");
+        } else if (strcmp(type, "string") == 0) {
+            buffer_statement("    scanf(\"%%99[^\\n]\", %s);\n", var_name);
+            buffer_statement("    while (getchar() != '\\n');\n");
+        } else if (strcmp(type, "char") == 0) {
+            buffer_statement("    scanf(\"%%c\", &%s);\n", var_name);
+            buffer_statement("    while (getchar() != '\\n');\n");
+        } else {
+            buffer_statement("    scanf(\"%%d\", &%s);\n", var_name);
+            buffer_statement("    while (getchar() != '\\n');\n");
+        }
     }
     | RETURN expr SEMICOLON {
         buffer_statement("    return %s;\n", $2);
