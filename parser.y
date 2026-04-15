@@ -25,7 +25,7 @@ typedef struct {
 
 StatementBuffer buffer_stack[MAX_BUFFER_DEPTH];
 int buffer_depth = 0;  // 0 = no buffering, 1+ = buffering level
-char temp_else_body[50000];  // Temporary storage for else body
+char temp_else_body[100000];  // Temporary storage for else body
 
 void push_buffer() {
     if (buffer_depth < MAX_BUFFER_DEPTH - 1) {
@@ -101,7 +101,7 @@ int depth = 0;
     int num;
 }
 
-%token INT FLOAT CHAR RETURN IF ELSE PRINTF VOID
+%token INT FLOAT CHAR RETURN IF ELSE FOR PRINTF VOID
 %token <str> NUMBER FLOAT_NUM ID STRING CHAR_LIT
 %token PLUS MINUS MUL DIV MOD ASSIGN SEMICOLON COMMA QUOTE
 %token LPAREN RPAREN LBRACE RBRACE
@@ -231,16 +231,27 @@ statement:
         char *if_body = pop_buffer();
         buffer_statement("    if (%s) {\n%s    }\n", $3, if_body);
         if (strlen(temp_else_body) > 0) {
-            buffer_statement("    else {\n%s    }\n", temp_else_body);
+            buffer_statement("%s", temp_else_body);
             temp_else_body[0] = '\0';
         }
+    }
+    | FOR LPAREN ID ASSIGN expr SEMICOLON expr SEMICOLON ID INC RPAREN LBRACE {push_buffer();} statements RBRACE {
+        char *loop_body = pop_buffer();
+        buffer_statement("    for (%s = %s; %s; %s++) {\n%s    }\n", $3, $5, $7, $9, loop_body);
     }
     ;
 
 else_part:
     /* empty */
     | ELSE LBRACE {push_buffer();} statements RBRACE {
-        strcpy(temp_else_body, pop_buffer());
+        char *else_body = pop_buffer();
+        sprintf(temp_else_body, "    else {\n%s    }\n", else_body);
+    }
+    | ELSE IF LPAREN expr RPAREN LBRACE {push_buffer();} statements RBRACE else_part {
+        char *elseif_body = pop_buffer();
+        char temp[100000];
+        sprintf(temp, "    else if (%s) {\n%s    }\n%s", $4, elseif_body, temp_else_body);
+        strcpy(temp_else_body, temp);
     }
     ;
 
