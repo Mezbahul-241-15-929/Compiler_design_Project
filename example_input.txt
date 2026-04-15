@@ -1,0 +1,25 @@
+/* Example Input for Mini C Compiler */
+
+/* Example 1: Simple Variable Declaration and Assignment */
+int a;
+a = 5;
+
+/* Example 2: If Statement */
+if (a) {
+   a = a + 1;
+}
+
+/* Example 3: If-Else Statement */
+if (a) {
+   a = 10;
+} else {
+   a = 0;
+}
+
+/* Example 4: While Loop */
+while (a) {
+   a = a - 1;
+}
+
+/* Example 5: Return Statement */
+return 0;
