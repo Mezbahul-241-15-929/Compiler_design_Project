@@ -15,6 +15,7 @@ int yylineno = 1;
 "int"           { return INT; }
 "float"         { return FLOAT; }
 "char"          { return CHAR; }
+"string"        { return STRING; }
 "return"        { return RETURN; }
 "if"            { return IF; }
 "else"          { return ELSE; }
@@ -23,7 +24,7 @@ int yylineno = 1;
 "void"          { return VOID; }
 [0-9]+\.[0-9]+  { yylval.str = strdup(yytext); return FLOAT_NUM; }
 [0-9]+          { yylval.str = strdup(yytext); return NUMBER; }
-\"[^\"]*\"      { yylval.str = strdup(yytext); return STRING; }
+\"[^\"]*\"      { yylval.str = strdup(yytext); return STRING_LIT; }
 \'[^\']*\'      { yylval.str = strdup(yytext); return CHAR_LIT; }
 [a-zA-Z_][a-zA-Z0-9_]* { yylval.str = strdup(yytext); return ID; }
 "+"             { return PLUS; }

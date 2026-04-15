@@ -101,8 +101,8 @@ int depth = 0;
     int num;
 }
 
-%token INT FLOAT CHAR RETURN IF ELSE FOR PRINTF VOID
-%token <str> NUMBER FLOAT_NUM ID STRING CHAR_LIT
+%token INT FLOAT CHAR STRING RETURN IF ELSE FOR PRINTF VOID
+%token <str> NUMBER FLOAT_NUM ID STRING_LIT CHAR_LIT
 %token PLUS MINUS MUL DIV MOD ASSIGN SEMICOLON COMMA QUOTE
 %token LPAREN RPAREN LBRACE RBRACE
 %token LT GT LE GE EQ NE NOT AND OR INC DEC
@@ -166,13 +166,17 @@ statement:
         buffer_statement("    char %s = '\\0';\n", $2);
         add_var_type($2, "char");
     }
-    | CHAR LPAREN RPAREN ID SEMICOLON {
-        buffer_statement("    char *%s = \"\";\n", $4);
-        add_var_type($4, "string");
+    | CHAR ID ASSIGN CHAR_LIT SEMICOLON {
+        buffer_statement("    char %s = %s;\n", $2, $4);
+        add_var_type($2, "char");
     }
-    | CHAR LPAREN RPAREN ID ASSIGN STRING SEMICOLON {
-        buffer_statement("    char *%s = %s;\n", $4, $6);
-        add_var_type($4, "string");
+    | STRING ID SEMICOLON {
+        buffer_statement("    char *%s = \"\";\n", $2);
+        add_var_type($2, "string");
+    }
+    | STRING ID ASSIGN STRING_LIT SEMICOLON {
+        buffer_statement("    char *%s = %s;\n", $2, $4);
+        add_var_type($2, "string");
     }
     | ID ASSIGN expr SEMICOLON {
         buffer_statement("    %s = %s;\n", $1, $3);
@@ -195,26 +199,64 @@ statement:
                 buffer_statement("    printf(\"%%f\\n\", %s);\n", val);
             } else if (strcmp(type, "string") == 0) {
                 buffer_statement("    printf(\"%%s\\n\", %s);\n", val);
+            } else if (strcmp(type, "char") == 0) {
+                buffer_statement("    printf(\"%%c\\n\", %s);\n", val);
             } else {
                 buffer_statement("    printf(\"%%d\\n\", %s);\n", val);
             }
         }
     }
     | PRINTF LPAREN expr COMMA expr RPAREN SEMICOLON {
-        char *label = $3;
-        char *val = $5;
-        char *type = get_var_type(val);
-        if (val[0] == '"') {
-            buffer_statement("    printf(\"%%s\", %s); printf(%s);\n", label, val);
-        } else if (strchr(val, '.') != NULL) {
-            buffer_statement("    printf(\"%%s%%f\", %s, %s);\n", label, val);
-        } else {
-            if (strcmp(type, "float") == 0) {
-                buffer_statement("    printf(\"%%s%%f\", %s, %s);\n", label, val);
+        char *first = $3;
+        char *second = $5;
+        char *type_first = get_var_type(first);
+        char *type_second = get_var_type(second);
+        
+        // Check if first is a string literal
+        int first_is_string = (first[0] == '"');
+        int second_is_string = (second[0] == '"');
+        
+        if (first_is_string && !second_is_string) {
+            // printf("label:", variable)
+            char *type = get_var_type(second);
+            if (strchr(second, '.') != NULL) {
+                buffer_statement("    printf(\"%%s%%f\", %s, %s);\n", first, second);
+            } else if (strcmp(type, "float") == 0) {
+                buffer_statement("    printf(\"%%s%%f\", %s, %s);\n", first, second);
             } else if (strcmp(type, "string") == 0) {
-                buffer_statement("    printf(\"%%s%%s\", %s, %s);\n", label, val);
+                buffer_statement("    printf(\"%%s%%s\", %s, %s);\n", first, second);
+            } else if (strcmp(type, "char") == 0) {
+                buffer_statement("    printf(\"%%s%%c\", %s, %s);\n", first, second);
             } else {
-                buffer_statement("    printf(\"%%s%%d\", %s, %s);\n", label, val);
+                buffer_statement("    printf(\"%%s%%d\", %s, %s);\n", first, second);
+            }
+        } else if (!first_is_string && second_is_string) {
+            // printf(variable, "label:")
+            char *type = get_var_type(first);
+            if (strchr(first, '.') != NULL) {
+                buffer_statement("    printf(\"%%f%%s\", %s, %s);\n", first, second);
+            } else if (strcmp(type, "float") == 0) {
+                buffer_statement("    printf(\"%%f%%s\", %s, %s);\n", first, second);
+            } else if (strcmp(type, "string") == 0) {
+                buffer_statement("    printf(\"%%s%%s\", %s, %s);\n", first, second);
+            } else if (strcmp(type, "char") == 0) {
+                buffer_statement("    printf(\"%%c%%s\", %s, %s);\n", first, second);
+            } else {
+                buffer_statement("    printf(\"%%d%%s\", %s, %s);\n", first, second);
+            }
+        } else if (second_is_string) {
+            // Both strings
+            buffer_statement("    printf(\"%%s%%s\", %s, %s);\n", first, second);
+        } else {
+            // Both variables
+            char *type_first_actual = get_var_type(first);
+            char *type_second_actual = get_var_type(second);
+            if (strcmp(type_first_actual, "float") == 0 && strcmp(type_second_actual, "float") == 0) {
+                buffer_statement("    printf(\"%%f%%f\", %s, %s);\n", first, second);
+            } else if (strcmp(type_first_actual, "string") == 0 || strcmp(type_second_actual, "string") == 0) {
+                buffer_statement("    printf(\"%%s%%s\", %s, %s);\n", first, second);
+            } else {
+                buffer_statement("    printf(\"%%d%%d\", %s, %s);\n", first, second);
             }
         }
     }
@@ -335,7 +377,7 @@ expr:
     | FLOAT_NUM {
         $$ = $1;
     }
-    | STRING {
+    | STRING_LIT {
         $$ = $1;
     }
     | CHAR_LIT {
